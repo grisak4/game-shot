@@ -16,10 +16,16 @@ static class Game
 	private const int w = 30; // ширина карты
 	private static int px = w/2; // кординаты героя по X
 	private static int py = h/2; // кординаты героя по Y
-	private static float Reload = 10; // перезарядка
+	private static bool isreload = true; // перезарядка
 	private static int ax; // кординаты пули по X
 	private static int ay; // кординаты пули по Y
-	private static char pk;
+	private static char pk; 
+	private static bool isS,isW,isA,isD; // переменные для стрельбы
+	private static Random r = new Random(); // переменная для рандома
+	private static int score = 0;
+	private static int zx = 10; // кординаты зомби по X
+	private static int zy = 15; // кординаты зомби по Y
+	private static bool isXY = true;
 
   public static void Start()
 	{
@@ -33,9 +39,10 @@ static class Game
 		  Show();
 			Input();
 			Logic();
-			Thread.Sleep(50);
+			Thread.Sleep(150);
 			Console.Clear();
 		}
+		Show();
 		Console.WriteLine("вы проиграли...");
 	}
 
@@ -56,7 +63,10 @@ static class Game
 				else if(i == ay && j == ax) // отображает пулю
 				{
 					Console.Write("o");
-					Shoot();
+				}
+				else if(i == zy && j == zx)
+				{
+					Console.Write("Z");
 				}
 				else // ставит пропуски если нечего не совпало
 				{
@@ -65,23 +75,24 @@ static class Game
 			}
 			Console.WriteLine();
 		}
+		Console.WriteLine("Score : {0}",score);
 	}
 
-	private static void Shoot()
+	private static void TShoot()
 	{
-		  if(pk == 'w')
+		  if(isW)
 			{
 				ay--;
 			}
-			else if(pk == 's')
+			else if(isS)
 			{
 				ay++;
 			}
-			else if(pk == 'a')
+			else if(isA)
 			{
 				ax--;
 			}
-			else if(pk == 'd')
+			else if(isD)
 			{
 				ax++;
 			}
@@ -111,29 +122,100 @@ static class Game
 			pk = 'd';
 			   break;
 			case 'f': // выстреливает
-			if(pk == 'w')
-			{
-				ay = py++;
-				ax = px;
-			}
-			else if(pk == 's')
-			{
-				ay = py--;
-				ax = px;
-			}
-			else if(pk == 'a')
-			{
-				ay = py;
-				ax = px++;
-			}
-			else if(pk == 'd')
-			{
-				ay = py;
-				ax = px--;
-			}
+			Shoot();
+			isreload = false;
 			   break;
 		}
 	 }
+	}
+
+	private static void Shoot()
+	{
+		if(pk == 'w' && isreload)
+			{
+				Console.Beep();
+				ay = py++;
+				ax = px;
+				isW = true;
+				isA = false;
+				isS = false;
+				isD = false;
+			}
+			else if(pk == 's' && isreload)
+			{
+				Console.Beep();
+				ay = py--;
+				ax = px;
+				isW = false;
+				isA = false;
+				isS = true;
+				isD = false;
+			}
+			else if(pk == 'a' && isreload)
+			{
+				Console.Beep();
+				ay = py;
+				ax = px++;
+				isW = false;
+				isA = true;
+				isS = false;
+				isD = false;
+			}
+			else if(pk == 'd' && isreload)
+			{
+				Console.Beep();
+				ay = py;
+				ax = px--;
+				isW = false;
+				isA = false;
+				isS = false;
+				isD = true;
+			}
+	}
+
+	private static void SpawnZ() // генерация зомби
+	{
+		zx = r.Next(0,w);
+		zy = r.Next(0,h);
+	}
+
+	private static void ZMove() // движениеaaa зомби
+	{
+		bool isX = zx > px ? true : false;
+		bool isY = zy> py ? true : false;
+		if(zy == py)
+		{
+			if(isX)
+			{
+				zx--;
+			}
+			else
+			{
+				zx++;
+			}
+		}
+		else if(zx == px)
+		{
+			if(isY)
+			{
+				zy--;
+			}
+			else
+			{
+				zy++;
+			}
+		}
+		else
+		{
+			if(isXY)
+			{
+				zx++;
+			}
+			else
+			{
+				zx--;
+			}
+		}
 	}
 
 	private static void Logic()
@@ -142,5 +224,29 @@ static class Game
 		{
 			isalive = false;
 		}
+		if(ax == zx && ay == zy) // если пуля задела зомби
+		{
+			Console.Beep();
+			SpawnZ();
+			score++;
+		}
+		if(zx == px && zy == py) // если персонаж задел зомби
+		{
+			isalive = false;
+		}
+		if(zx == w-1 || zy == h-1)
+		{
+			isXY = false;
+		}
+		if(zx == 0 || zy == 0)
+		{
+			isXY = true;
+		}
+		if(ax == w-1 || ay == h-1 || ax == 0 || ay == 0) // перезарядка
+		{
+			isreload = true;
+		}
+		TShoot();
+		ZMove();
 	}
 }
